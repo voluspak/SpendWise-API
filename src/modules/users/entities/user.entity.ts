@@ -1,0 +1,50 @@
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { UserRole } from '../../../common/enums/index.js';
+import { UserPreferences } from '../interfaces/user-preferences.interface.js';
+import { DEFAULT_USER_PREFERENCES } from '../constants/user.constants.js';
+
+@Entity('users')
+export class User {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
+  @Column({ type: 'varchar', length: 100 })
+  name!: string;
+
+  @Column({ type: 'varchar', length: 100 })
+  surname!: string;
+
+  @Column({ type: 'varchar', unique: true, length: 255 })
+  email!: string;
+
+  @Column({ type: 'varchar', name: 'password_hash' })
+  passwordHash!: string;
+
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.User })
+  role!: UserRole;
+
+  @Column({ type: 'varchar', name: 'profile_image', nullable: true })
+  profileImage!: string | null;
+
+  @Column({ type: 'jsonb', default: DEFAULT_USER_PREFERENCES })
+  preferences!: UserPreferences;
+
+  @Column({ type: 'boolean', name: 'is_active', default: true })
+  isActive!: boolean;
+
+  @CreateDateColumn({ type: 'timestamp with time zone', name: 'created_at' })
+  createdAt!: Date;
+
+  @UpdateDateColumn({ type: 'timestamp with time zone', name: 'updated_at' })
+  updatedAt!: Date;
+
+  @DeleteDateColumn({ type: 'timestamp with time zone', name: 'deleted_at' })
+  deletedAt!: Date | null;
+}
