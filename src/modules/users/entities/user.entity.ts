@@ -24,8 +24,8 @@ export class User {
   @Column({ type: 'varchar', unique: true, length: 255 })
   email!: string;
 
-  @Column({ type: 'varchar', name: 'password_hash' })
-  passwordHash!: string;
+  @Column({ type: 'varchar', name: 'password_hash', nullable: true })
+  passwordHash!: string | null;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.User })
   role!: UserRole;
@@ -35,6 +35,22 @@ export class User {
 
   @Column({ type: 'jsonb', default: DEFAULT_USER_PREFERENCES })
   preferences!: UserPreferences;
+
+  @Column({ type: 'varchar', name: 'refresh_token_hash', nullable: true })
+  refreshTokenHash!: string | null;
+
+  @Column({ type: 'varchar', name: 'password_reset_token', nullable: true })
+  passwordResetToken!: string | null;
+
+  @Column({
+    type: 'timestamp with time zone',
+    name: 'password_reset_expires',
+    nullable: true,
+  })
+  passwordResetExpires!: Date | null;
+
+  @Column({ type: 'varchar', name: 'google_id', unique: true, nullable: true })
+  googleId!: string | null;
 
   @Column({ type: 'boolean', name: 'is_active', default: true })
   isActive!: boolean;
