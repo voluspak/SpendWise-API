@@ -27,6 +27,7 @@ import { Roles } from '../../common/decorators/roles.decorator.js';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { UserRole } from '../../common/enums/index.js';
+import { JwtPayload } from '../auth/interfaces/index.js';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -43,35 +44,35 @@ export class UsersController {
 
   @Put('profile')
   async updateProfile(
-    @CurrentUser() userId: string,
+    @CurrentUser() user: JwtPayload,
     @Body() dto: UpdateProfileDto,
   ): Promise<UserResponseDto> {
-    return this.usersService.updateProfile(userId, dto);
+    return this.usersService.updateProfile(user.sub, dto);
   }
 
   @Put('password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async changePassword(
-    @CurrentUser() userId: string,
+    @CurrentUser() user: JwtPayload,
     @Body() dto: ChangePasswordDto,
   ): Promise<void> {
-    await this.usersService.changePassword(userId, dto);
+    await this.usersService.changePassword(user.sub, dto);
   }
 
   @Put('preferences')
   async updatePreferences(
-    @CurrentUser() userId: string,
+    @CurrentUser() user: JwtPayload,
     @Body() dto: UpdatePreferencesDto,
   ): Promise<UserResponseDto> {
-    return this.usersService.updatePreferences(userId, dto);
+    return this.usersService.updatePreferences(user.sub, dto);
   }
 
   @Put('profile-image')
   async updateProfileImage(
-    @CurrentUser() userId: string,
+    @CurrentUser() user: JwtPayload,
     @Body('imageUrl') imageUrl: string,
   ): Promise<UserResponseDto> {
-    return this.usersService.updateProfileImage(userId, imageUrl);
+    return this.usersService.updateProfileImage(user.sub, imageUrl);
   }
 
   @Get(':id')
@@ -79,8 +80,8 @@ export class UsersController {
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<UserResponseDto> {
-    const user = await this.usersService.findOneById(id);
-    return UserResponseDto.fromEntity(user);
+    const userEntity = await this.usersService.findOneById(id);
+    return UserResponseDto.fromEntity(userEntity);
   }
 
   @Patch(':id/status')

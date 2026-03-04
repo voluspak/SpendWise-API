@@ -66,19 +66,26 @@ export class UsersService {
     return this.usersRepository.findOneBy({ email });
   }
 
+  async findOneByGoogleId(googleId: string): Promise<User | null> {
+    return this.usersRepository.findOneBy({ googleId });
+  }
+
   async createUser(data: {
     name: string;
     surname: string;
     email: string;
-    password: string;
+    password?: string;
     role?: UserRole;
+    googleId?: string;
   }): Promise<User> {
     const existing = await this.findOneByEmail(data.email);
     if (existing) {
       throw new ConflictException('El email ya está registrado');
     }
 
-    const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
+    const passwordHash = data.password
+      ? await bcrypt.hash(data.password, SALT_ROUNDS)
+      : null;
 
     const user = this.usersRepository.create({
       name: data.name,
@@ -86,6 +93,7 @@ export class UsersService {
       email: data.email,
       passwordHash,
       role: data.role ?? UserRole.User,
+      googleId: data.googleId ?? null,
       preferences: DEFAULT_USER_PREFERENCES,
     });
 
@@ -112,6 +120,12 @@ export class UsersService {
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
     const user = await this.findOneById(userId);
+
+    if (!user.passwordHash) {
+      throw new BadRequestException(
+        'Esta cuenta no tiene contraseña configurada',
+      );
+    }
 
     const isMatch = await bcrypt.compare(
       dto.currentPassword,
