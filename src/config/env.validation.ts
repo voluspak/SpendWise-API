@@ -2,6 +2,7 @@ import { plainToInstance } from 'class-transformer';
 import {
   IsEnum,
   IsNumber,
+  IsOptional,
   IsString,
   Max,
   Min,
@@ -39,6 +40,22 @@ class EnvironmentVariables {
 
   @IsString()
   DB_NAME!: string;
+
+  @IsString()
+  JWT_SECRET!: string;
+
+  @IsString()
+  JWT_EXPIRATION!: string;
+
+  @IsString()
+  JWT_REFRESH_SECRET!: string;
+
+  @IsString()
+  JWT_REFRESH_EXPIRATION!: string;
+
+  @IsOptional()
+  @IsString()
+  GOOGLE_CLIENT_ID?: string;
 }
 
 export function validate(
