@@ -63,7 +63,9 @@ export class CategoriesService {
     const category = await this.findOneById(categoryId);
 
     if (category.isGlobal) {
-      throw new ForbiddenException('No se pueden modificar categorías globales');
+      throw new ForbiddenException(
+        'No se pueden modificar categorías globales',
+      );
     }
     if (category.userId !== userId) {
       throw new ForbiddenException(

@@ -128,6 +128,24 @@ export class TransactionsService {
     return transaction;
   }
 
+  async sumExpensesByCategory(
+    userId: string,
+    categoryId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<number> {
+    const result = await this.transactionsRepository
+      .createQueryBuilder('t')
+      .select('COALESCE(SUM(t.amount), 0)', 'total')
+      .where('t.user_id = :userId', { userId })
+      .andWhere('t.category_id = :categoryId', { categoryId })
+      .andWhere('t.type = :type', { type: 'EXPENSE' })
+      .andWhere('t.date >= :startDate', { startDate })
+      .andWhere('t.date <= :endDate', { endDate })
+      .getRawOne<{ total: string }>();
+    return Number(result?.total ?? 0);
+  }
+
   private async validateCategoryForUser(
     categoryId: string,
     userId: string,

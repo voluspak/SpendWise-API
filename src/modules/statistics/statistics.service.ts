@@ -282,8 +282,7 @@ export class StatisticsService {
       .addSelect('COALESCE(AVG(t.amount), 0)', 'averageTransactionValue');
 
     if (period !== StatsPeriod.All) {
-      const interval =
-        period === StatsPeriod.Month ? '1 month' : '1 year';
+      const interval = period === StatsPeriod.Month ? '1 month' : '1 year';
       const dateFilter = `t.created_at >= NOW() - INTERVAL '${interval}'`;
       txQb.where(dateFilter);
     }
