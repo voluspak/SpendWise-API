@@ -4,7 +4,6 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository } from 'typeorm';
@@ -14,19 +13,19 @@ import { OAuth2Client } from 'google-auth-library';
 import { User } from '../users/entities/user.entity.js';
 import { UsersService } from '../users/users.service.js';
 import { UserResponseDto } from '../users/dto/user-response.dto.js';
-import { JwtPayload, TokenResponse } from './interfaces/index.js';
+import { JwtPayload, TokenResponse, AuthResult } from './interfaces/index.js';
 import {
   RegisterDto,
   LoginDto,
   GoogleAuthDto,
   ForgotPasswordDto,
   ResetPasswordDto,
-  AuthResponseDto,
 } from './dto/index.js';
 import {
   SALT_ROUNDS,
   PASSWORD_RESET_EXPIRATION_HOURS,
 } from './constants/auth.constants.js';
+import { config } from '../../config/app/index.js';
 
 @Injectable()
 export class AuthService {
@@ -38,15 +37,13 @@ export class AuthService {
     private readonly usersRepository: Repository<User>,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
   ) {
-    const googleClientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
-    this.googleClient = googleClientId
-      ? new OAuth2Client(googleClientId)
+    this.googleClient = config.google.clientId
+      ? new OAuth2Client(config.google.clientId)
       : null;
   }
 
-  async register(dto: RegisterDto): Promise<AuthResponseDto> {
+  async register(dto: RegisterDto): Promise<AuthResult> {
     const user = await this.usersService.createUser({
       name: dto.name,
       surname: dto.surname,
@@ -57,14 +54,14 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     await this.updateRefreshTokenHash(user.id, tokens.refreshToken);
 
-    return AuthResponseDto.from(
-      tokens.accessToken,
-      tokens.refreshToken,
-      UserResponseDto.fromEntity(user),
-    );
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: UserResponseDto.fromEntity(user),
+    };
   }
 
-  async login(dto: LoginDto): Promise<AuthResponseDto> {
+  async login(dto: LoginDto): Promise<AuthResult> {
     const user = await this.usersService.findOneByEmail(dto.email);
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Credenciales inválidas');
@@ -85,14 +82,14 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     await this.updateRefreshTokenHash(user.id, tokens.refreshToken);
 
-    return AuthResponseDto.from(
-      tokens.accessToken,
-      tokens.refreshToken,
-      UserResponseDto.fromEntity(user),
-    );
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: UserResponseDto.fromEntity(user),
+    };
   }
 
-  async googleAuth(dto: GoogleAuthDto): Promise<AuthResponseDto> {
+  async googleAuth(dto: GoogleAuthDto): Promise<AuthResult> {
     if (!this.googleClient) {
       throw new BadRequestException(
         'Autenticación con Google no está configurada',
@@ -101,7 +98,7 @@ export class AuthService {
 
     const ticket = await this.googleClient.verifyIdToken({
       idToken: dto.token,
-      audience: this.configService.get<string>('GOOGLE_CLIENT_ID'),
+      audience: config.google.clientId ?? undefined,
     });
 
     const googlePayload = ticket.getPayload();
@@ -133,17 +130,17 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     await this.updateRefreshTokenHash(user.id, tokens.refreshToken);
 
-    return AuthResponseDto.from(
-      tokens.accessToken,
-      tokens.refreshToken,
-      UserResponseDto.fromEntity(user),
-    );
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: UserResponseDto.fromEntity(user),
+    };
   }
 
   async refreshTokens(
     userId: string,
     refreshToken: string,
-  ): Promise<AuthResponseDto> {
+  ): Promise<AuthResult> {
     const user = await this.usersService.findOneById(userId);
 
     if (!user.refreshTokenHash) {
@@ -161,11 +158,11 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     await this.updateRefreshTokenHash(user.id, tokens.refreshToken);
 
-    return AuthResponseDto.from(
-      tokens.accessToken,
-      tokens.refreshToken,
-      UserResponseDto.fromEntity(user),
-    );
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: UserResponseDto.fromEntity(user),
+    };
   }
 
   async logout(userId: string): Promise<void> {
@@ -187,9 +184,7 @@ export class AuthService {
         passwordResetExpires: expires,
       });
 
-      this.logger.log(
-        `Password reset token for ${user.email}: ${resetToken}`,
-      );
+      this.logger.log(`Password reset token for ${user.email}: ${resetToken}`);
     }
   }
 
@@ -203,10 +198,7 @@ export class AuthService {
     let matchedUser: User | null = null;
     for (const user of users) {
       if (!user.passwordResetToken) continue;
-      const isMatch = await bcrypt.compare(
-        dto.token,
-        user.passwordResetToken,
-      );
+      const isMatch = await bcrypt.compare(dto.token, user.passwordResetToken);
       if (isMatch) {
         matchedUser = user;
         break;
@@ -242,8 +234,8 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.getOrThrow('JWT_REFRESH_EXPIRATION'),
+        secret: config.jwt.refresh.secret,
+        expiresIn: config.jwt.refresh.expiresIn,
       }),
     ]);
 

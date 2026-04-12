@@ -5,15 +5,16 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
 import {
   RegisterDto,
   LoginDto,
   GoogleAuthDto,
-  RefreshTokenDto,
   ForgotPasswordDto,
   ResetPasswordDto,
   AuthResponseDto,
@@ -23,26 +24,44 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { JwtPayload } from './interfaces/index.js';
 import { JwtRefreshPayload } from './strategies/jwt-refresh.strategy.js';
 import { UserResponseDto } from '../users/dto/user-response.dto.js';
+import { config } from '../../config/app/index.js';
+
+const { cookies } = config;
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() dto: RegisterDto): Promise<AuthResponseDto> {
-    return this.authService.register(dto);
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponseDto> {
+    const result = await this.authService.register(dto);
+    this.setTokenCookies(res, result.accessToken, result.refreshToken);
+    return AuthResponseDto.from(result.user);
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto): Promise<AuthResponseDto> {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ message: string }> {
+    const result = await this.authService.login(dto);
+    this.setTokenCookies(res, result.accessToken, result.refreshToken);
+    return { message: 'Inicio de sesión exitoso' };
   }
 
   @Post('google')
   @HttpCode(HttpStatus.OK)
-  async googleAuth(@Body() dto: GoogleAuthDto): Promise<AuthResponseDto> {
-    return this.authService.googleAuth(dto);
+  async googleAuth(
+    @Body() dto: GoogleAuthDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ message: string }> {
+    const result = await this.authService.googleAuth(dto);
+    this.setTokenCookies(res, result.accessToken, result.refreshToken);
+    return { message: 'Autenticación con Google exitosa' };
   }
 
   @Post('refresh')
@@ -50,16 +69,26 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async refreshTokens(
     @CurrentUser() user: JwtRefreshPayload,
-    @Body() _dto: RefreshTokenDto,
-  ): Promise<AuthResponseDto> {
-    return this.authService.refreshTokens(user.sub, user.refreshToken);
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ message: string }> {
+    const result = await this.authService.refreshTokens(
+      user.sub,
+      user.refreshToken,
+    );
+    this.setTokenCookies(res, result.accessToken, result.refreshToken);
+    return { message: 'Token renovado exitosamente' };
   }
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async logout(@CurrentUser() user: JwtPayload): Promise<void> {
+  async logout(
+    @CurrentUser() user: JwtPayload,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
     await this.authService.logout(user.sub);
+    res.clearCookie(cookies.accessToken.name, cookies.clearToken);
+    res.clearCookie(cookies.refreshToken.name, cookies.clearToken);
   }
 
   @Post('forgot-password')
@@ -69,7 +98,8 @@ export class AuthController {
   ): Promise<{ message: string }> {
     await this.authService.forgotPassword(dto);
     return {
-      message: 'Si el email existe, recibirás instrucciones para restablecer tu contraseña',
+      message:
+        'Si el email existe, recibirás instrucciones para restablecer tu contraseña',
     };
   }
 
@@ -86,5 +116,14 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getProfile(@CurrentUser() user: JwtPayload): Promise<UserResponseDto> {
     return this.authService.getProfile(user.sub);
+  }
+
+  private setTokenCookies(
+    res: Response,
+    accessToken: string,
+    refreshToken: string,
+  ): void {
+    res.cookie(cookies.accessToken.name, accessToken, cookies.accessToken);
+    res.cookie(cookies.refreshToken.name, refreshToken, cookies.refreshToken);
   }
 }
