@@ -3,6 +3,8 @@ import * as process from 'process';
 import { deepFreeze } from '../utils/deep-freeze.utility.js';
 import { parseJSONString } from '../utils/parser.utility.js';
 
+export const REQUIRED = Symbol('REQUIRED_ENV_VAR');
+
 export interface ConfigBaseOptions {
   [k: string]: unknown;
   envKey?: string;
@@ -14,14 +16,19 @@ export interface ConfigBaseOptions {
 export class ConfigFactory<Config> {
   protected config: Config & ConfigBaseOptions;
   protected frozenConfig!: Config & ConfigBaseOptions;
+  private readonly requiredPaths: string[];
 
   constructor(configs: Config & ConfigBaseOptions) {
     this.config = configs;
+    this.requiredPaths = this.collectRequiredPaths(
+      configs as Record<string, unknown>,
+    );
     this.set();
   }
 
   set(): void {
     this.checkEnv();
+    this.validateRequiredVars();
     this.deepFreeze();
   }
 
@@ -114,6 +121,70 @@ export class ConfigFactory<Config> {
         key.slice(1),
         value,
       );
+    }
+  }
+
+  private collectRequiredPaths(
+    obj: Record<string, unknown>,
+    prefix = '',
+  ): string[] {
+    const paths: string[] = [];
+    for (const key of Object.keys(obj)) {
+      const fullPath = prefix ? `${prefix}.${key}` : key;
+      const value = obj[key];
+      if (value === REQUIRED) {
+        paths.push(fullPath);
+      } else if (
+        typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value)
+      ) {
+        paths.push(
+          ...this.collectRequiredPaths(
+            value as Record<string, unknown>,
+            fullPath,
+          ),
+        );
+      }
+    }
+    return paths;
+  }
+
+  private getNestedValue(
+    obj: Record<string, unknown>,
+    path: string,
+  ): unknown {
+    return path
+      .split('.')
+      .reduce<unknown>(
+        (current, key) =>
+          current !== null &&
+          current !== undefined &&
+          typeof current === 'object'
+            ? (current as Record<string, unknown>)[key]
+            : undefined,
+        obj,
+      );
+  }
+
+  private validateRequiredVars(): void {
+    const missing = this.requiredPaths.filter(
+      (path) =>
+        this.getNestedValue(
+          this.config as Record<string, unknown>,
+          path,
+        ) === REQUIRED,
+    );
+
+    if (missing.length > 0) {
+      const envKey = this.config.envKey ?? 'APP';
+      const expectedVars = missing.map(
+        (path) => `  - ${envKey}_${path.replace(/\./g, '_')}`,
+      );
+      console.error(
+        `\n[ConfigFactory] Faltan variables de entorno requeridas:\n${expectedVars.join('\n')}\n`,
+      );
+      process.exit(1);
     }
   }
 }

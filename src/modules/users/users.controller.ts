@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -10,8 +11,14 @@ import {
   Patch,
   Put,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { v4 as uuidv4 } from 'uuid';
 import { UsersService } from './users.service.js';
 import {
   ChangePasswordDto,
@@ -28,6 +35,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { UserRole } from '../../common/enums/index.js';
 import { JwtPayload } from '../auth/interfaces/index.js';
+
+const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -68,10 +78,33 @@ export class UsersController {
   }
 
   @Put('profile-image')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: './uploads/profile-images',
+        filename: (_req, file, cb) => {
+          const uniqueName = `${uuidv4()}${extname(file.originalname)}`;
+          cb(null, uniqueName);
+        },
+      }),
+      limits: { fileSize: MAX_FILE_SIZE },
+      fileFilter: (_req, file, cb) => {
+        if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
+          cb(new BadRequestException('Solo se permiten imágenes JPEG, PNG o WebP'), false);
+          return;
+        }
+        cb(null, true);
+      },
+    }),
+  )
   async updateProfileImage(
     @CurrentUser() user: JwtPayload,
-    @Body('imageUrl') imageUrl: string,
+    @UploadedFile() file: Express.Multer.File,
   ): Promise<UserResponseDto> {
+    if (!file) {
+      throw new BadRequestException('Se requiere una imagen');
+    }
+    const imageUrl = `/uploads/profile-images/${file.filename}`;
     return this.usersService.updateProfileImage(user.sub, imageUrl);
   }
 

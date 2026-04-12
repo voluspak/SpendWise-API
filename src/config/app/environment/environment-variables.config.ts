@@ -1,5 +1,6 @@
 import { type CookieOptions } from 'express';
 import { type StringValue } from 'ms';
+import { REQUIRED } from '../config-factory.service.js';
 
 type CookieOptionsWithName = CookieOptions & { name: string };
 
@@ -8,12 +9,12 @@ export const environmentVariablesConfig = {
     salt: 10,
   },
   jwt: {
-    secret: null as unknown as string,
+    secret: REQUIRED as unknown as string,
     access: {
       expiresIn: '15m' as StringValue,
     },
     refresh: {
-      secret: null as unknown as string,
+      secret: REQUIRED as unknown as string,
       expiresIn: '7d' as StringValue,
     },
   },
@@ -44,11 +45,11 @@ export const environmentVariablesConfig = {
   },
   postgres: {
     database: {
-      name: null as unknown as string,
-      host: null as unknown as string,
-      password: null as unknown as string,
-      port: null as unknown as number,
-      username: null as unknown as string,
+      name: REQUIRED as unknown as string,
+      host: REQUIRED as unknown as string,
+      password: REQUIRED as unknown as string,
+      port: REQUIRED as unknown as number,
+      username: REQUIRED as unknown as string,
     },
   },
   google: {
