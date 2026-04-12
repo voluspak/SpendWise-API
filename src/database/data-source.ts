@@ -1,16 +1,16 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { config } from 'dotenv';
+import { config } from '../config/app/index.js';
 
-config();
+const { postgres } = config;
 
 export default new DataSource({
   type: 'postgres',
-  host: process.env['DB_HOST'],
-  port: parseInt(process.env['DB_PORT'] ?? '5432', 10),
-  username: process.env['DB_USERNAME'],
-  password: process.env['DB_PASSWORD'],
-  database: process.env['DB_NAME'],
+  host: postgres.database.host,
+  port: postgres.database.port,
+  username: postgres.database.username,
+  password: postgres.database.password,
+  database: postgres.database.name,
   entities: ['src/**/*.entity.ts'],
   migrations: ['src/database/migrations/*.ts'],
 });
