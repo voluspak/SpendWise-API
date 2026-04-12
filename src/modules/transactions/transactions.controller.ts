@@ -10,14 +10,18 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { TransactionsService } from './transactions.service.js';
+import { TransactionsExportService } from './export/transactions-export.service.js';
 import {
   CreateTransactionDto,
   UpdateTransactionDto,
   TransactionResponseDto,
   ListTransactionsQueryDto,
+  ExportTransactionsQueryDto,
 } from './dto/index.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
@@ -28,7 +32,10 @@ import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto.js
 @Controller('transactions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(
+    private readonly transactionsService: TransactionsService,
+    private readonly transactionsExportService: TransactionsExportService,
+  ) {}
 
   @Get()
   async findAll(
@@ -36,6 +43,55 @@ export class TransactionsController {
     @Query() query: ListTransactionsQueryDto,
   ): Promise<PaginatedResponseDto<TransactionResponseDto>> {
     return this.transactionsService.findAll(user.sub, query);
+  }
+
+  @Get('export/csv')
+  async exportCsv(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: ExportTransactionsQueryDto,
+    @Res() res: Response,
+  ): Promise<void> {
+    const transactions =
+      await this.transactionsExportService.findTransactionsForExport(
+        user.sub,
+        query,
+      );
+    const csv = this.transactionsExportService.generateCsv(transactions);
+    const today = new Date().toISOString().split('T')[0];
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="transacciones_${today}.csv"`,
+    );
+    res.send(csv);
+  }
+
+  @Get('export/pdf')
+  async exportPdf(
+    @CurrentUser() user: JwtPayload,
+    @Query() query: ExportTransactionsQueryDto,
+    @Res() res: Response,
+  ): Promise<void> {
+    const transactions =
+      await this.transactionsExportService.findTransactionsForExport(
+        user.sub,
+        query,
+      );
+    const pdfBuffer = await this.transactionsExportService.generatePdf(
+      transactions,
+      user.sub,
+      query.dateFrom,
+      query.dateTo,
+    );
+    const today = new Date().toISOString().split('T')[0];
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="transacciones_${today}.pdf"`,
+    );
+    res.send(pdfBuffer);
   }
 
   @Post()
