@@ -27,9 +27,10 @@ import {
 } from './constants/auth.constants.js';
 import { config } from '../../config/app/index.js';
 
+const logger = new Logger('AuthService');
+
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
   private readonly googleClient: OAuth2Client | null;
 
   constructor(
@@ -172,20 +173,22 @@ export class AuthService {
   async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
     const user = await this.usersService.findOneByEmail(dto.email);
 
-    if (user) {
-      const resetToken = uuidv4();
-      const hashedToken = await bcrypt.hash(resetToken, SALT_ROUNDS);
-
-      const expires = new Date();
-      expires.setHours(expires.getHours() + PASSWORD_RESET_EXPIRATION_HOURS);
-
-      await this.usersRepository.update(user.id, {
-        passwordResetToken: hashedToken,
-        passwordResetExpires: expires,
-      });
-
-      this.logger.log(`Password reset token for ${user.email}: ${resetToken}`);
+    if (!user) {
+      logger.warn(`User not found for email: ${dto.email}`);
+      return;
     }
+    const resetToken = uuidv4();
+    const hashedToken = await bcrypt.hash(resetToken, SALT_ROUNDS);
+
+    const expires = new Date();
+    expires.setHours(expires.getHours() + PASSWORD_RESET_EXPIRATION_HOURS);
+
+    await this.usersRepository.update(user.id, {
+      passwordResetToken: hashedToken,
+      passwordResetExpires: expires,
+    });
+
+    logger.log(`Password reset token for ${user.email}: ${resetToken}`);
   }
 
   async resetPassword(dto: ResetPasswordDto): Promise<void> {

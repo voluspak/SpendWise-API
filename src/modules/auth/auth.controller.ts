@@ -22,7 +22,7 @@ import {
 } from './dto/index.js';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
-import { JwtPayload } from './interfaces/index.js';
+import { AuthResult, JwtPayload } from './interfaces/index.js';
 import { JwtRefreshPayload } from './strategies/jwt-refresh.strategy.js';
 import { UserResponseDto } from '../users/dto/user-response.dto.js';
 import { config } from '../../config/app/index.js';
@@ -52,10 +52,10 @@ export class AuthController {
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ message: string }> {
+  ): Promise<AuthResult> {
     const result = await this.authService.login(dto);
     this.setTokenCookies(res, result.accessToken, result.refreshToken);
-    return { message: 'Inicio de sesión exitoso' };
+    return result;
   }
 
   @Post('google')
@@ -63,10 +63,10 @@ export class AuthController {
   async googleAuth(
     @Body() dto: GoogleAuthDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ message: string }> {
+  ): Promise<AuthResult> {
     const result = await this.authService.googleAuth(dto);
     this.setTokenCookies(res, result.accessToken, result.refreshToken);
-    return { message: 'Autenticación con Google exitosa' };
+    return result;
   }
 
   @Post('refresh')
@@ -75,13 +75,13 @@ export class AuthController {
   async refreshTokens(
     @CurrentUser() user: JwtRefreshPayload,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ message: string }> {
+  ): Promise<AuthResult> {
     const result = await this.authService.refreshTokens(
       user.sub,
       user.refreshToken,
     );
     this.setTokenCookies(res, result.accessToken, result.refreshToken);
-    return { message: 'Token renovado exitosamente' };
+    return result;
   }
 
   @Post('logout')
