@@ -1,5 +1,6 @@
 /node_modules
 dist
+bruno/
 
 # Logs
 logs
@@ -145,3 +146,10 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Uploads
+/uploads
+
+# Project specific
+context.md
+Proyecto_Intermodular_SpendWise_segunda_entrega.docx.pdf
