@@ -222,11 +222,11 @@ export class TransactionsExportService {
     transactions: Transaction[],
   ): void {
     const totalIncome = transactions
-      .filter((t) => t.type === TransactionType.Income)
+      .filter((t) => t.type === TransactionType.INCOME)
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     const totalExpense = transactions
-      .filter((t) => t.type === TransactionType.Expense)
+      .filter((t) => t.type === TransactionType.EXPENSE)
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     const balance = totalIncome - totalExpense;

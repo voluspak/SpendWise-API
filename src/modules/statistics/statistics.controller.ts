@@ -65,7 +65,7 @@ export class StatisticsController {
   }
 
   @Get('admin/overview')
-  @Roles(UserRole.Admin)
+  @Roles(UserRole.admin)
   async getAdminOverview(
     @Query() query: AdminOverviewQueryDto,
   ): Promise<AdminOverviewResponseDto> {
@@ -73,7 +73,7 @@ export class StatisticsController {
   }
 
   @Get('admin/user-growth')
-  @Roles(UserRole.Admin)
+  @Roles(UserRole.admin)
   async getUserGrowth(
     @Query() query: MonthlyQueryDto,
   ): Promise<UserGrowthResponseDto[]> {

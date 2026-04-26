@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transaction } from '../transactions/entities/transaction.entity.js';
@@ -19,6 +19,8 @@ import {
   AdminOverviewResponseDto,
   UserGrowthResponseDto,
 } from './dto/index.js';
+
+const logger = new Logger('StatisticsService');
 
 @Injectable()
 export class StatisticsService {
@@ -44,8 +46,8 @@ export class StatisticsService {
       )
       .where('t.user_id = :userId', { userId })
       .setParameters({
-        income: TransactionType.Income,
-        expense: TransactionType.Expense,
+        income: TransactionType.INCOME,
+        expense: TransactionType.EXPENSE,
       })
       .getRawOne<{ totalIncome: string; totalExpenses: string }>();
 
@@ -91,6 +93,10 @@ export class StatisticsService {
     userId: string,
     query: ByCategoryQueryDto,
   ): Promise<CategoryStatResponseDto[]> {
+    const type = query?.type ?? TransactionType.EXPENSE;
+
+    logger.log(`Searching by category with user ID: ${userId}`);
+
     const qb = this.transactionRepo
       .createQueryBuilder('t')
       .innerJoin('t.category', 'c')
@@ -100,7 +106,7 @@ export class StatisticsService {
       .addSelect('c.icon', 'categoryIcon')
       .addSelect('COALESCE(SUM(t.amount), 0)', 'total')
       .where('t.user_id = :userId', { userId })
-      .andWhere('t.type = :type', { type: TransactionType.Expense });
+      .andWhere('t.type = :type', { type });
 
     if (query.startDate) {
       qb.andWhere('t.date >= :startDate', { startDate: query.startDate });
@@ -152,8 +158,8 @@ export class StatisticsService {
       .where('t.user_id = :userId', { userId })
       .andWhere('EXTRACT(YEAR FROM t.date)::int = :year', { year })
       .setParameters({
-        income: TransactionType.Income,
-        expense: TransactionType.Expense,
+        income: TransactionType.INCOME,
+        expense: TransactionType.EXPENSE,
       })
       .groupBy('EXTRACT(MONTH FROM t.date)')
       .getRawMany<{ month: number; income: string; expense: string }>();
@@ -186,8 +192,8 @@ export class StatisticsService {
       .where('t.user_id = :userId', { userId })
       .andWhere('EXTRACT(YEAR FROM t.date)::int < :year', { year })
       .setParameters({
-        income: TransactionType.Income,
-        expense: TransactionType.Expense,
+        income: TransactionType.INCOME,
+        expense: TransactionType.EXPENSE,
       })
       .getRawOne<{ balance: string }>();
 
@@ -218,7 +224,7 @@ export class StatisticsService {
       .addSelect('c.icon', 'categoryIcon')
       .addSelect('COALESCE(SUM(t.amount), 0)', 'total')
       .where('t.user_id = :userId', { userId })
-      .andWhere('t.type = :type', { type: TransactionType.Expense })
+      .andWhere('t.type = :type', { type: TransactionType.EXPENSE })
       .andWhere('EXTRACT(MONTH FROM t.date)::int = :month', { month })
       .andWhere('EXTRACT(YEAR FROM t.date)::int = :year', { year })
       .groupBy('c.id')
@@ -240,7 +246,7 @@ export class StatisticsService {
       .createQueryBuilder('t')
       .select('COALESCE(SUM(t.amount), 0)', 'total')
       .where('t.user_id = :userId', { userId })
-      .andWhere('t.type = :type', { type: TransactionType.Expense })
+      .andWhere('t.type = :type', { type: TransactionType.EXPENSE })
       .andWhere('EXTRACT(MONTH FROM t.date)::int = :month', { month })
       .andWhere('EXTRACT(YEAR FROM t.date)::int = :year', { year })
       .getRawOne<{ total: string }>();
@@ -349,8 +355,8 @@ export class StatisticsService {
       .andWhere('EXTRACT(YEAR FROM t.date)::int = :year', { year })
       .andWhere('EXTRACT(MONTH FROM t.date)::int = :month', { month })
       .setParameters({
-        income: TransactionType.Income,
-        expense: TransactionType.Expense,
+        income: TransactionType.INCOME,
+        expense: TransactionType.EXPENSE,
       })
       .getRawOne<{ income: string; expenses: string }>();
 
