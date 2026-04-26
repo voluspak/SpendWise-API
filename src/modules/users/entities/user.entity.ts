@@ -27,7 +27,7 @@ export class User {
   @Column({ type: 'varchar', name: 'password_hash', nullable: true })
   passwordHash!: string | null;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.User })
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.user })
   role!: UserRole;
 
   @Column({ type: 'varchar', name: 'profile_image', nullable: true })

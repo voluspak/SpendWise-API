@@ -45,7 +45,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @Roles(UserRole.Admin)
+  @Roles(UserRole.admin)
   async findAll(
     @Query() query: ListUsersQueryDto,
   ): Promise<PaginatedResponseDto<UserResponseDto>> {
@@ -109,7 +109,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Roles(UserRole.Admin)
+  @Roles(UserRole.admin)
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<UserResponseDto> {
@@ -118,7 +118,7 @@ export class UsersController {
   }
 
   @Patch(':id/status')
-  @Roles(UserRole.Admin)
+  @Roles(UserRole.admin)
   async updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserStatusDto,
@@ -127,7 +127,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.Admin)
+  @Roles(UserRole.admin)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.usersService.softDelete(id);

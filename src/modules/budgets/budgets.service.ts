@@ -155,7 +155,7 @@ export class BudgetsService {
     const now = new Date();
 
     switch (period) {
-      case BudgetPeriod.Weekly: {
+      case BudgetPeriod.WEEKLY: {
         const day = now.getDay();
         const diffToMonday = day === 0 ? -6 : 1 - day;
         const monday = new Date(now);
@@ -167,7 +167,7 @@ export class BudgetsService {
           endDate: this.formatDate(sunday),
         };
       }
-      case BudgetPeriod.Monthly: {
+      case BudgetPeriod.MONTHLY: {
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         return {
@@ -175,7 +175,7 @@ export class BudgetsService {
           endDate: this.formatDate(lastDay),
         };
       }
-      case BudgetPeriod.Yearly: {
+      case BudgetPeriod.YEARLY: {
         const firstDay = new Date(now.getFullYear(), 0, 1);
         const lastDay = new Date(now.getFullYear(), 11, 31);
         return {

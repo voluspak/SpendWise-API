@@ -92,7 +92,7 @@ export class UsersService {
       surname: data.surname,
       email: data.email,
       passwordHash,
-      role: data.role ?? UserRole.User,
+      role: data.role ?? UserRole.user,
       googleId: data.googleId ?? null,
       preferences: DEFAULT_USER_PREFERENCES,
     });

@@ -41,13 +41,13 @@ export class CategoriesController {
   }
 
   @Get('admin')
-  @Roles(UserRole.Admin)
+  @Roles(UserRole.admin)
   async findAllAdmin(): Promise<CategoryResponseDto[]> {
     return this.categoriesService.findAllAdmin();
   }
 
   @Post('admin')
-  @Roles(UserRole.Admin)
+  @Roles(UserRole.admin)
   async createGlobal(
     @Body() dto: CreateCategoryDto,
   ): Promise<CategoryResponseDto> {
@@ -55,7 +55,7 @@ export class CategoriesController {
   }
 
   @Put('admin/:id')
-  @Roles(UserRole.Admin)
+  @Roles(UserRole.admin)
   async updateGlobal(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateCategoryDto,
@@ -64,7 +64,7 @@ export class CategoriesController {
   }
 
   @Delete('admin/:id')
-  @Roles(UserRole.Admin)
+  @Roles(UserRole.admin)
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeGlobal(
     @Param('id', ParseUUIDPipe) id: string,
