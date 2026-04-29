@@ -1,8 +1,9 @@
 import { IsDateString, IsOptional } from 'class-validator';
+import { TransactionType } from '../../../common/enums';
 
 export class ByCategoryQueryDto {
   @IsOptional()
-  type?: any;
+  type?: TransactionType;
 
   @IsOptional()
   @IsDateString()

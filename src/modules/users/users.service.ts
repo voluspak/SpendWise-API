@@ -106,14 +106,20 @@ export class UsersService {
   ): Promise<UserResponseDto> {
     const user = await this.findOneById(userId);
 
-    if (dto.email && dto.email !== user.email) {
+    if (dto.email !== undefined && dto.email !== user.email) {
       const existing = await this.findOneByEmail(dto.email);
       if (existing) {
         throw new ConflictException('El email ya está en uso');
       }
+      user.email = dto.email;
+    }
+    if (dto.name !== undefined) {
+      user.name = dto.name;
+    }
+    if (dto.surname !== undefined) {
+      user.surname = dto.surname;
     }
 
-    Object.assign(user, dto);
     const saved = await this.usersRepository.save(user);
     return UserResponseDto.fromEntity(saved);
   }
