@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${SW_postgres_database_username:-spendwise}
+      POSTGRES_PASSWORD: ${SW_postgres_database_password:?required}
+      POSTGRES_DB: ${SW_postgres_database_name:-spendwise}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - spendwise_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SW_postgres_database_username:-spendwise} -d ${SW_postgres_database_name:-spendwise}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: devops/docker/pro.Dockerfile
+    image: spendwise-api:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      ENV_KEY: SW
+      PORT: 3000
+      SW_jwt_secret: ${SW_jwt_secret:?required}
+      SW_jwt_refresh_secret: ${SW_jwt_refresh_secret:?required}
+      SW_postgres_database_host: postgres
+      SW_postgres_database_port: 5432
+      SW_postgres_database_username: ${SW_postgres_database_username:-spendwise}
+      SW_postgres_database_password: ${SW_postgres_database_password:?required}
+      SW_postgres_database_name: ${SW_postgres_database_name:-spendwise}
+      SW_google_clientId: ${SW_google_clientId:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8080}
+    volumes:
+      - api_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - spendwise_net
+
+  web:
+    build:
+      context: ../webapp
+      dockerfile: devops/docker/pro.Dockerfile
+    image: spendwise-web:latest
+    restart: unless-stopped
+    ports:
+      - "${WEB_HOST_PORT:-8080}:8080"
+    depends_on:
+      - api
+    networks:
+      - spendwise_net
+
+volumes:
+  pgdata:
+  api_uploads:
+
+networks:
+  spendwise_net:
+    driver: bridge
