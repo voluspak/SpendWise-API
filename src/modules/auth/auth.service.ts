@@ -13,6 +13,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { User } from '../users/entities/user.entity.js';
 import { UsersService } from '../users/users.service.js';
 import { UserResponseDto } from '../users/dto/user-response.dto.js';
+import { MailerPort } from '../mail/ports/mailer.port.js';
 import { JwtPayload, TokenResponse, AuthResult } from './interfaces/index.js';
 import {
   RegisterDto,
@@ -38,6 +39,7 @@ export class AuthService {
     private readonly usersRepository: Repository<User>,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly mailer: MailerPort,
   ) {
     this.googleClient = config.google.clientId
       ? new OAuth2Client(config.google.clientId)
@@ -188,7 +190,13 @@ export class AuthService {
       passwordResetExpires: expires,
     });
 
-    logger.log(`Password reset token for ${user.email}: ${resetToken}`);
+    const resetUrl = `${config.app.frontend.url}/auth/reset-password?token=${resetToken}`;
+    await this.mailer.sendPasswordResetEmail({
+      to: user.email,
+      firstName: user.name,
+      lastName: user.surname,
+      resetUrl,
+    });
   }
 
   async resetPassword(dto: ResetPasswordDto): Promise<void> {

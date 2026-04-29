@@ -4,6 +4,7 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity.js';
 import { UsersModule } from '../users/users.module.js';
+import { MailModule } from '../mail/mail.module.js';
 import { AuthService } from './auth.service.js';
 import { AuthController } from './auth.controller.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
@@ -13,6 +14,7 @@ import { config } from '../../config/app/index.js';
 @Module({
   imports: [
     UsersModule,
+    MailModule,
     TypeOrmModule.forFeature([User]),
     PassportModule,
     JwtModule.register({

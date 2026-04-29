@@ -55,6 +55,23 @@ export const environmentVariablesConfig = {
   google: {
     clientId: null as string | null,
   },
+  sendgrid: {
+    api: {
+      key: REQUIRED as unknown as string,
+    },
+    from: {
+      email: REQUIRED as unknown as string,
+      name: REQUIRED as unknown as string,
+    },
+    template: {
+      id: REQUIRED as unknown as string,
+    },
+  },
+  app: {
+    frontend: {
+      url: REQUIRED as unknown as string,
+    },
+  },
   logger: {
     level: 'warn',
   },
