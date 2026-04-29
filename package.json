@@ -24,14 +24,15 @@
     "migration:revert": "pnpm typeorm migration:revert"
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.18",
+    "@nestjs/common": "^11.1.19",
     "@nestjs/config": "^4.0.4",
-    "@nestjs/core": "^11.1.18",
+    "@nestjs/core": "^11.1.19",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "^11.1.18",
+    "@nestjs/platform-express": "^11.1.19",
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.1",
+    "@sendgrid/mail": "^8.1.6",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
@@ -48,14 +49,14 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "typeorm": "^0.3.28",
-    "uuid": "^13.0.0"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.39.4",
-    "@nestjs/cli": "^11.0.19",
-    "@nestjs/schematics": "^11.0.10",
-    "@nestjs/testing": "^11.1.18",
+    "@nestjs/cli": "^11.0.21",
+    "@nestjs/schematics": "^11.1.0",
+    "@nestjs/testing": "^11.1.19",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
@@ -64,7 +65,7 @@
     "@types/multer": "^2.1.0",
     "@types/node": "^22.19.17",
     "@types/passport-jwt": "^4.0.1",
-    "@types/pdfkit": "^0.17.5",
+    "@types/pdfkit": "^0.17.6",
     "@types/supertest": "^6.0.3",
     "@types/uuid": "^11.0.0",
     "eslint": "^9.39.4",
@@ -72,7 +73,7 @@
     "eslint-plugin-prettier": "^5.5.5",
     "globals": "^16.5.0",
     "jest": "^30.3.0",
-    "prettier": "^3.8.2",
+    "prettier": "^3.8.3",
     "source-map-support": "^0.5.21",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.9",
@@ -81,7 +82,7 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.58.1"
+    "typescript-eslint": "^8.59.1"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -93,6 +94,9 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
@@ -128,7 +132,8 @@
       "serialize-javascript@<7.0.5": ">=7.0.5",
       "lodash@>=4.0.0 <=4.17.23": ">=4.18.0",
       "lodash@<=4.17.23": ">=4.18.0",
-      "@nestjs/core@<=11.1.17": ">=11.1.18"
+      "@nestjs/core@<=11.1.17": ">=11.1.18",
+      "uuid@<14.0.0": ">=14.0.0"
     }
   }
 }
