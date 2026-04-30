@@ -151,7 +151,12 @@ export class UsersService {
   ): Promise<UserResponseDto> {
     const user = await this.findOneById(userId);
 
-    user.preferences = { ...user.preferences, ...dto };
+    user.preferences = {
+      ...user.preferences,
+      ...(dto.currency !== undefined && { currency: dto.currency }),
+      ...(dto.language !== undefined && { language: dto.language }),
+      ...(dto.dateFormat !== undefined && { dateFormat: dto.dateFormat }),
+    };
     const saved = await this.usersRepository.save(user);
     return UserResponseDto.fromEntity(saved);
   }
